@@ -1,0 +1,3 @@
+-- Core migrations remain reserved for schema that is required for NEXM Core
+-- correctness. Optional observability schemas (such as audit storage) are
+-- initialized by their component and must not become a global Core READY gate.
