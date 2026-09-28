@@ -25,6 +25,20 @@ Config.NotifyDefaults = {
     maxTitleLength = 128
 }
 
+-- Generic restart-safe recovery for temporary NEXM-controlled outfits.
+-- Persistence is server-side in data/temporary_appearances.json. Consumer
+-- resources remain responsible for deciding when to save/restore/acknowledge.
+Config.TemporaryAppearance = {
+    restoreModel = true,
+    modelLoadTimeoutMs = 5000,
+    verifyDelayMs = 50,
+    maxPayloadBytes = 16384,
+    maxOwnerLength = 128,
+    maxDrawable = 4096,
+    maxTexture = 4096,
+    maxPalette = 3
+}
+
 Config.Locale = 'en'
 Config.LocaleFallback = 'en'
 Config.Debug = false

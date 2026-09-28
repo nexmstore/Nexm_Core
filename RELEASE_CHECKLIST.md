@@ -1,22 +1,27 @@
-# 1.0.0-rc.1.hotfix.3 Release Checklist
+# 1.0.0-rc.1.hotfix.4 Release Checklist
 
-## Completed
+## Core package
 
-- [x] Feature freeze maintained; no speculative gameplay/features added.
-- [x] Public API, export/network and client-security inventories retained.
-- [x] Production manifest excludes tests/mocks and ships the consumer import shim.
-- [x] Core/validator offline automated regression baseline clean.
-- [x] A_ESX_OX verified in real runtime.
-- [x] B_QB_QBINV verified in real runtime.
-- [x] C_QB_OX verified in real runtime.
-- [x] D_QBOX_OX verified in real runtime.
-- [x] E_ESX_NATIVE verified in real runtime.
-- [x] Real full FXServer restart baseline evidence retained for A_ESX_OX.
-- [x] Core production hot-restart remains outside the supported contract.
-- [x] Compatibility documentation synchronized with verified profile state.
+- [x] Version/build identity updated.
+- [x] Temporary appearance JSON data file included.
+- [x] Server persistence module loaded before public API.
+- [x] Client capture/restore/verify helper loaded before client public API.
+- [x] Owner is bound to calling resource; arbitrary client player identifiers are not accepted.
+- [x] Duplicate save preserves original snapshot by default.
+- [x] Clear/ack affects only the calling resource owner record.
+- [x] `playerDropped` does not clear records.
+- [x] No SQL migration or framework clothing dependency added.
+- [x] CFX open-source escrow policy retained.
 
-## Separate qualification items
+## Live gate
 
-- [ ] Record separate N_NATIVE_NOTIFY live-certification evidence if it should be marketed as live-verified rather than supported/recommended.
-- [ ] Capture normal-operation resmon/CPU/memory data separately from the heavy validator if desired.
-- [ ] Perform desired soak and clean-install/upgrade exercises before final `1.0.0` authorization.
+- [ ] Consuming product normal save/apply/restore/ack flow.
+- [ ] Consumer resource restart recovery.
+- [ ] Full FXServer restart + reconnect recovery.
+- [ ] Disconnect/reconnect recovery.
+- [ ] Forced persistence failure blocks temporary outfit application.
+- [ ] Restore verification failure retains record.
+- [ ] Model mismatch behavior validated with configured `restoreModel`.
+- [ ] Multiple owner isolation validated in live runtime.
+
+These live gates cannot be truthfully marked complete by a Core-only package without the consuming product integration.

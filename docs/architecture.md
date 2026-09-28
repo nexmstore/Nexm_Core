@@ -7,3 +7,6 @@ Gameplay products never need to call ESX/QBCore/Qbox/inventory APIs directly. Pu
 Core readiness and component health are distinct. Optional integrations can be disabled or unavailable while Core remains READY. Products declare requirements at registration time.
 
 Notify, audit and external logging are supporting observability services: their failure does not roll back unrelated gameplay state.
+
+
+Temporary Appearance Recovery is a generic Core infrastructure service. Persistent records are keyed by canonical character identity plus resource owner. Core never clears them on `playerDropped`; the owning resource clears only after a verified client restore. The service uses native ped appearance snapshots and does not integrate framework clothing systems.

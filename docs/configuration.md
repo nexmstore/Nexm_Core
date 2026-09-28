@@ -15,3 +15,8 @@ Important selectors in `config.lua`:
 
 
 Startup validation rejects invalid framework/inventory/notify selectors, invalid locale identifiers, unsupported log levels, unsafe money/RPC limits, malformed network bounds, and invalid audit queue/backend settings with structured startup failure rather than delayed nil errors.
+
+
+## Temporary appearance recovery
+
+`Config.TemporaryAppearance` controls native ped recovery behavior and validation bounds. `restoreModel=true` allows the client helper to restore the saved ped model when it differs; set it to `false` to fail safely on model mismatch instead. `modelLoadTimeoutMs` bounds model streaming time, and `maxPayloadBytes`/drawable/texture/palette limits bound persisted client snapshots.

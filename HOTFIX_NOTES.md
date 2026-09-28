@@ -1,17 +1,14 @@
-# NEXM Core 1.0.0-rc.1.hotfix.3
+# NEXM Core 1.0.0-rc.1.hotfix.4
 
-Build: `mvp_rc1_matrix_13401539`
+Build: `mvp_rc1_tempappearance_7f2c4a91`
 
-Purpose: synchronize Core release metadata and bundled compatibility documentation with the completed real-runtime validation of all five primary framework/inventory profiles.
+Purpose: add reusable, persistent Temporary Appearance Recovery infrastructure without adding a framework clothing dependency.
 
-Verified profiles:
+New public namespaces:
 
-- A_ESX_OX
-- B_QB_QBINV
-- C_QB_OX
-- D_QBOX_OX
-- E_ESX_NATIVE
+- Server: `NEXM.TemporaryAppearance.Save/Get/Has/Clear/AcknowledgeRestore`
+- Client: `NEXM.TemporaryAppearance.Capture/Restore/Verify`
 
-Runtime behavior is unchanged from hotfix.2. NEXM Notify v1.0.3 remains the recommended optional notification provider. Existing ox_lib, ESX, QBCore, Qbox and custom providers remain available.
+Persistence: `data/temporary_appearances.json` with staged + backup writes. Records survive disconnect/full FXServer restart and are owner-isolated.
 
-No database schema or migration changes. No gameplay changes. No public API changes.
+Deploy with a full FXServer restart because Core/import build identity changes.

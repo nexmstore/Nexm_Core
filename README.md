@@ -2,11 +2,11 @@
 
 NEXM Core is a free, server-first FiveM infrastructure SDK for NEXM products. It normalizes framework/player lifecycle, money, inventory, RPC/security, notifications, localization, audit, services, integrations, components, migrations and diagnostics so NEXM products can target one stable Core contract.
 
-**Release candidate:** `1.0.0-rc.1.hotfix.3`  
-**Internal build:** `mvp_rc1_matrix_13401539`  
-**Release scope:** `MVP_RC_VALIDATED_MATRIX`
+**Release candidate:** `1.0.0-rc.1.hotfix.4`  
+**Internal build:** `mvp_rc1_tempappearance_7f2c4a91`  
+**Release scope:** `MVP_RC_TEMP_APPEARANCE_RECOVERY`
 
-The feature set is frozen for the first MVP release. This RC does not add gameplay systems and does not redesign stable Core behavior. It does **not** claim to be bug-free or final `1.0.0`.
+This RC keeps the validated framework/inventory matrix and adds one reusable infrastructure capability: restart-safe Temporary Appearance Recovery for NEXM-controlled temporary outfits. It is not a clothing/character system and does **not** claim to be final `1.0.0`.
 
 ## Validated compatibility matrix
 
@@ -21,6 +21,11 @@ The following real-runtime profiles are verified:
 Framework adapters included: ESX, QBCore, Qbox. Inventory adapters included: ox_inventory, qb-inventory, ESX native inventory, plus qs-inventory adapter architecture. Notification providers include NEXM Notify v1.0.3 (recommended), ox_lib, ESX, QBCore, Qbox, and custom where implemented.
 
 The five profiles above are release-validated. NEXM Notify is supported and recommended, but this package does not claim separate live-certification evidence for the N_NATIVE_NOTIFY profile unless that test evidence is recorded independently.
+
+
+## Temporary Appearance Recovery
+
+Core now provides resource-owner-bound persistent recovery records for temporary outfits. Server consumers use `NEXM.TemporaryAppearance.Save/Get/Has/Clear/AcknowledgeRestore`; client consumers may use `NEXM.TemporaryAppearance.Capture/Restore/Verify`. Records are keyed by Core's canonical player identity and consumer resource owner, persisted in `data/temporary_appearances.json`, and are not cleared on disconnect. A verified restore acknowledgement is required before normal cleanup. See `docs/temporary-appearance.md`.
 
 ## Install
 

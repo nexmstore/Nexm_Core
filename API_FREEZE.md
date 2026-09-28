@@ -17,6 +17,7 @@ Root: `IsReady`, `GetStatus`.
 - `Integrations`: `GetName`, `IsAvailable`, `GetCapabilities`, `GetState`, `IsHealthy`
 - `Components`: `Get`, `GetAll`
 - `Player`: `Get`, `Exists`, `GetIdentifier`, `GetCharacterIdentifier`, `GetAccountIdentifier`, `GetLicense`, `GetCharacterName`, `GetJob`, `GetJobGrade`, `GetSource`, `IsOnline`, `GetFrameworkObject`
+- `TemporaryAppearance`: `Save`, `Get`, `Has`, `Clear`, `AcknowledgeRestore`
 - `Jobs`: `Get`, `Has`, `HasAny`, `MinimumGrade`, `IsOnDuty`
 - `Money`: `Get`, `Add`, `Remove`, `CanAfford`
 - `Inventory`: `HasItem`, `GetItemCount`, `AddItem`, `RemoveItem`, `CanCarry`, `GetItems`
@@ -35,6 +36,7 @@ Root: `IsReady`, `GetStatus`.
 - `Player`: `GetLocal`, `IsLoaded`
 - `Callback`: `Await`
 - `Notify`: `Send`
+- `TemporaryAppearance`: `Capture`, `Restore`, `Verify`
 - `Locale`: `Register`, `Get`, `SetFallback`
 - `Events`: `OnPlayerLoaded`, `OnPlayerUnloaded`, `OnJobChanged`, `OnDutyChanged`
 - `Validate`

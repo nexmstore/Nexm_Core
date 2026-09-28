@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0-rc.1.hotfix.4 — temporary appearance recovery
+
+- Adds generic restart-safe Temporary Appearance Recovery infrastructure.
+- Persists native ped model/components/props per canonical player identity + resource owner in JSON.
+- Prevents duplicate saves from overwriting the original civilian snapshot by default.
+- Adds resource-bound server API: `TemporaryAppearance.Save/Get/Has/Clear/AcknowledgeRestore`.
+- Adds native client helpers: `TemporaryAppearance.Capture/Restore/Verify`.
+- Keeps records across disconnects and clears only after explicit verified-restore acknowledgement.
+- Adds staged/backup persistence recovery and corrupt/missing-file fail-safe handling.
+- Adds `/nexmtempappearance` debug summary when `Config.Debug=true`.
+- No framework clothing dependency or SQL migration added.
+
 ## 1.0.0-rc.1.hotfix.3 — validated compatibility matrix
 
 - Marks A_ESX_OX, B_QB_QBINV, C_QB_OX, D_QBOX_OX and E_ESX_NATIVE as verified/live tested based on completed real-runtime validation.

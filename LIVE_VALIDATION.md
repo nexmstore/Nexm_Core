@@ -1,4 +1,9 @@
-# NEXM Core 1.0.0-rc.1.hotfix.3 Live Validation
+# NEXM Core 1.0.0-rc.1.hotfix.4 Live Validation
+
+## Temporary Appearance Recovery live gate
+
+The Core implementation is packaged in hotfix.4. Product-level save/apply/restore/ack, consumer-resource restart, full FXServer restart/reconnect, failed restore retention and multiple-owner isolation remain live-runtime gates and are not claimed as passed by this Core-only artifact.
+
 
 Real-runtime validation is recorded separately from adapter availability. This document only claims the profiles explicitly confirmed as tested.
 

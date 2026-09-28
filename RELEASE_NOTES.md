@@ -1,12 +1,12 @@
-# NEXM Core 1.0.0-rc.1.hotfix.3 — validated compatibility matrix
+# NEXM Core 1.0.0-rc.1.hotfix.4 — Temporary Appearance Recovery
 
-- Public version: `1.0.0-rc.1.hotfix.3`
-- Internal build: `mvp_rc1_matrix_13401539`
-- Release status: `MVP_RC_VALIDATED_MATRIX`
-- Date: 2026-09-22
+- Public version: `1.0.0-rc.1.hotfix.4`
+- Internal build: `mvp_rc1_tempappearance_7f2c4a91`
+- Release status: `MVP_RC_TEMP_APPEARANCE_RECOVERY`
+- Date: 2026-09-27
 
-This hotfix updates release metadata to reflect completed real-runtime validation of the five primary Core compatibility profiles: A_ESX_OX, B_QB_QBINV, C_QB_OX, D_QBOX_OX and E_ESX_NATIVE.
+This build extends the validated hotfix.3 Core with a generic, restart-safe Temporary Appearance Recovery service for NEXM-controlled temporary outfits. It stores native ped appearance snapshots by canonical player identity and calling-resource owner, survives full FXServer restart through JSON persistence, preserves the original snapshot on duplicate saves, and requires explicit acknowledgement before cleanup.
 
-No framework, inventory, money, identity, permissions, RPC, database, migration, security or public API behavior is changed from hotfix.2. The NEXM Notify v1.0.3 integration from hotfix.2 remains included and recommended behind the stable `NEXM.Notify.Send` API.
+No framework clothing integration and no SQL migration are added. Existing framework, inventory, notify, money, identity, permissions, RPC and database contracts remain unchanged.
 
-Separate live-certification of the N_NATIVE_NOTIFY profile is not asserted by this release metadata unless its own real-runtime evidence is recorded.
+The Core half is implemented in this artifact. Product-specific integration (for example NEXM PestControl shift start/end/reconnect flows) is intentionally not bundled into this Core-only ZIP and must be validated in the consuming product separately.

@@ -64,6 +64,15 @@ local function validateConfig()
     ok, err = Validation.Integer(Config.NotifyDefaults.maxDuration, { name = 'Config.NotifyDefaults.maxDuration', min = Config.NotifyDefaults.minDuration, max = 300000 }); if not ok then return false, err end
     ok, err = Validation.Integer(Config.NotifyDefaults.maxMessageLength, { name = 'Config.NotifyDefaults.maxMessageLength', min = 64, max = 16384 }); if not ok then return false, err end
     ok, err = Validation.Integer(Config.NotifyDefaults.maxTitleLength, { name = 'Config.NotifyDefaults.maxTitleLength', min = 16, max = 1024 }); if not ok then return false, err end
+    ok, err = Validation.Table(Config.TemporaryAppearance, { name = 'Config.TemporaryAppearance', maxEntries = 16 }); if not ok then return false, err end
+    ok, err = Validation.Boolean(Config.TemporaryAppearance.restoreModel, { name = 'Config.TemporaryAppearance.restoreModel' }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.modelLoadTimeoutMs, { name = 'Config.TemporaryAppearance.modelLoadTimeoutMs', min = 250, max = 30000 }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.verifyDelayMs, { name = 'Config.TemporaryAppearance.verifyDelayMs', min = 0, max = 5000 }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.maxPayloadBytes, { name = 'Config.TemporaryAppearance.maxPayloadBytes', min = 1024, max = 262144 }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.maxOwnerLength, { name = 'Config.TemporaryAppearance.maxOwnerLength', min = 8, max = 256 }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.maxDrawable, { name = 'Config.TemporaryAppearance.maxDrawable', min = 255, max = 65535 }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.maxTexture, { name = 'Config.TemporaryAppearance.maxTexture', min = 255, max = 65535 }); if not ok then return false, err end
+    ok, err = Validation.Integer(Config.TemporaryAppearance.maxPalette, { name = 'Config.TemporaryAppearance.maxPalette', min = 3, max = 16 }); if not ok then return false, err end
     ok, err = Validation.Table(Config.Integrations.priorities, { name = 'Config.Integrations.priorities', maxEntries = 64 }); if not ok then return false, err end
     ok, err = Validation.Integer(Config.Security.MaxMoneyTransaction, { name = 'Config.Security.MaxMoneyTransaction', min = 1, max = 2147483647 }); if not ok then return false, err end
     ok, err = Validation.Integer(Config.Security.MaxItemTransaction, { name = 'Config.Security.MaxItemTransaction', min = 1, max = 1000000 }); if not ok then return false, err end

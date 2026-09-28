@@ -10,6 +10,7 @@ local DB = NEXM_INTERNAL.Modules.DB
 local Migrations = NEXM_INTERNAL.Modules.Migrations
 local Readiness = NEXM_INTERNAL.Modules.Readiness
 local Player = NEXM_INTERNAL.Modules.Player
+local TemporaryAppearance = NEXM_INTERNAL.Modules.TemporaryAppearance
 local Jobs = NEXM_INTERNAL.Modules.Jobs
 local Lifecycle = NEXM_INTERNAL.Modules.Lifecycle
 local Money = NEXM_INTERNAL.Modules.Money
@@ -187,6 +188,36 @@ local function buildFacade(owner)
         GetSource = getter(Player.GetSource),
         IsOnline = predicate(Player.IsOnline),
         GetFrameworkObject = sourceGetter(Player.GetFrameworkObject)
+    }
+    -- TemporaryAppearance is resource-owner bound. A consumer can only access
+    -- records created under its own resource name, preventing one NEXM product
+    -- from clearing another product's recovery snapshot.
+    facade.TemporaryAppearance = {
+        Save = function(source, appearance, options)
+            local ready, readyErr = requireReady(); if not ready then return false, readyErr end
+            local valid, sourceErr = Validation.Source(source, { name = 'source' }); if not valid then return false, sourceErr end
+            return TemporaryAppearance.Save(source, owner, appearance, options)
+        end,
+        Get = function(source)
+            local ready, readyErr = requireReady(); if not ready then return nil, readyErr end
+            local valid, sourceErr = Validation.Source(source, { name = 'source' }); if not valid then return nil, sourceErr end
+            return TemporaryAppearance.Get(source, owner)
+        end,
+        Has = function(source)
+            local ready, readyErr = requireReady(); if not ready then return false, readyErr end
+            local valid, sourceErr = Validation.Source(source, { name = 'source' }); if not valid then return false, sourceErr end
+            return TemporaryAppearance.Has(source, owner)
+        end,
+        Clear = function(source, reason)
+            local ready, readyErr = requireReady(); if not ready then return false, readyErr end
+            local valid, sourceErr = Validation.Source(source, { name = 'source' }); if not valid then return false, sourceErr end
+            return TemporaryAppearance.Clear(source, owner, reason)
+        end,
+        AcknowledgeRestore = function(source)
+            local ready, readyErr = requireReady(); if not ready then return false, readyErr end
+            local valid, sourceErr = Validation.Source(source, { name = 'source' }); if not valid then return false, sourceErr end
+            return TemporaryAppearance.Clear(source, owner, 'verified_restore')
+        end
     }
     facade.Jobs = {
         Get = sourceGetter(Jobs.Get),

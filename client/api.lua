@@ -6,6 +6,7 @@ local Constants = NEXM_INTERNAL.Modules.Constants
 local Errors = NEXM_INTERNAL.Modules.Errors
 local Callbacks = NEXM_INTERNAL.Modules.ClientCallbacks
 local Notify = NEXM_INTERNAL.Modules.ClientNotify
+local TemporaryAppearance = NEXM_INTERNAL.Modules.ClientTemporaryAppearance
 local Locale = NEXM_INTERNAL.Modules.Locale
 local Codes = Constants.ERROR_CODES
 
@@ -123,6 +124,11 @@ local function build(boundOwner)
         },
         Notify = {
             Send = function(message, notifyType, duration, options) return Notify.Send(message, notifyType, duration, options) end
+        },
+        TemporaryAppearance = {
+            Capture = function() return TemporaryAppearance.Capture() end,
+            Restore = function(snapshot, options) return TemporaryAppearance.Restore(snapshot, options) end,
+            Verify = function(snapshot, options) return TemporaryAppearance.Verify(snapshot, options) end
         },
         Locale = {
             Register = function(locale, strings)

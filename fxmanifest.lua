@@ -4,8 +4,8 @@ game 'gta5'
 name 'nexm_core'
 author 'NEXM'
 description 'Reusable Foundation for the NEXM Script Ecosystem'
-version '1.0.0-rc.1.hotfix.3'
-nexm_build 'mvp_rc1_matrix_13401539'
+version '1.0.0-rc.1.hotfix.4'
+nexm_build 'mvp_rc1_tempappearance_7f2c4a91'
 
 dependency 'oxmysql'
 
@@ -53,6 +53,7 @@ server_scripts {
     'server/managers/framework.lua',
     'server/player_cache.lua',
     'server/player.lua',
+    'server/temporary_appearance.lua',
     'server/jobs.lua',
     'server/lifecycle.lua',
     'server/session_guard.lua',
@@ -90,6 +91,7 @@ client_scripts {
     'client/managers/notify.lua',
     'client/notify.lua',
     'client/state.lua',
+    'client/temporary_appearance.lua',
     'client/events.lua',
     'client/callbacks.lua',
     'client/api.lua'

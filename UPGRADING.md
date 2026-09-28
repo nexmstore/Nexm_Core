@@ -20,3 +20,8 @@ Perform one full FXServer restart when replacing the Core so all consumers reloa
 ## Upgrade to 1.0.0-rc.1.hotfix.3
 
 This is a release-metadata/certification update over hotfix.2. Runtime behavior is unchanged. Replace the resource and perform a full FXServer restart so consumers reload `@nexm_core/import.lua` with build `mvp_rc1_matrix_13401539`.
+
+
+## Upgrade to 1.0.0-rc.1.hotfix.4
+
+Replace the Core resource and perform a full FXServer restart so all consumers reload `@nexm_core/import.lua` with build `mvp_rc1_tempappearance_7f2c4a91`. Preserve the `data/temporary_appearances.json` file on later upgrades because it may contain pending recovery records. Do not hot-restart Core in production.

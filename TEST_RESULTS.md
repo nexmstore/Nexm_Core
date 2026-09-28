@@ -1,3 +1,23 @@
+# NEXM Core 1.0.0-rc.1.hotfix.4 — Static Validation / Live Integration Pending
+
+Build: `mvp_rc1_tempappearance_7f2c4a91`
+
+The previously validated framework/inventory matrix remains the runtime baseline. This Core-only artifact adds Temporary Appearance Recovery. Static package checks are recorded for the new build; live product-flow tests (PestControl normal shift/resource restart/full server restart/disconnect/restore failure) require the consuming product integration and are intentionally not claimed as PASS here.
+
+## hotfix.4 Core-only validation
+
+- Lua syntax load: **73 / 73 PASS, 0 FAIL** (Lua 5.4 parser via installed runtime library).
+- fxmanifest local Lua path audit: **72 / 72 present**.
+- Version/build coherence (`fxmanifest.lua`, `shared/constants.lua`, `import.lua`): **PASS**.
+- Initial persistence JSON parse/schema: **PASS**.
+- CFX open-source escrow rule retained: **PASS**.
+- New temporary-appearance modules contain no direct ESX/QBCore/Qbox/illenium/qb-clothing/fivem-appearance/ox_lib dependency: **PASS**.
+- Server isolated runtime harness: duplicate save preservation, reconnect identity lookup, multiple-owner isolation, clear-one-owner-only, persistence-failure rollback: **PASS**.
+- Client isolated runtime harness: capture, same-model restore+verify, model mismatch safe failure, configured model recovery: **PASS**.
+- Real FXServer product integration tests: **PENDING** (requires consuming product flow; not falsely marked PASS).
+
+## Historical validation evidence
+
 # NEXM Core 1.0.0-rc.1.hotfix.3 — Automated Regression and Live Qualification
 
 ## Offline automated regression baseline
