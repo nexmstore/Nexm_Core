@@ -25,3 +25,13 @@ local ok, err = NEXM.TemporaryAppearance.AcknowledgeRestore(source)
 ```
 
 `Save` preserves an existing record by default, so a retry while the player is already wearing a temporary outfit cannot overwrite the original civilian snapshot. `options.force=true` exists only for trusted server-side recovery/admin logic. `Clear`/`AcknowledgeRestore` affect only the calling resource's owner record.
+
+## Inventory.RegisterUsableItem
+
+```lua
+local ok, err = NEXM.Inventory.RegisterUsableItem(itemName, function(source, itemContext)
+    -- server gameplay handler
+end, options)
+```
+
+This registration is bound automatically to the calling resource and is cleaned from Core's registry when that resource stops. The handler receives normalized `{ name, amount, slot, metadata, provider }` context. Registration does not consume the item; explicit server-side `NEXM.Inventory.RemoveItem` remains the gameplay resource's responsibility after its own success condition. See `docs/inventory.md` for ESX, QBCore, Qbox and ox_inventory setup.

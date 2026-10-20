@@ -7,7 +7,8 @@ local capabilitySchema = {
     metadata = 'boolean',
     metadataFilter = 'boolean',
     canCarry = 'boolean',
-    getItems = 'boolean'
+    getItems = 'boolean',
+    usableItems = 'boolean'
 }
 local requiredMethods = {
     'IsAvailable', 'Initialize', 'Shutdown', 'GetState',
@@ -60,6 +61,9 @@ function Contract.Validate(adapter)
     end
     if adapter.metadata.capabilities.getItems and type(adapter.GetItems) ~= 'function' then
         missing[#missing + 1] = 'GetItems'
+    end
+    if adapter.metadata.capabilities.usableItems and type(adapter.RegisterUsableItem) ~= 'function' then
+        missing[#missing + 1] = 'RegisterUsableItem'
     end
     if #missing > 0 then
         return false, Errors.Create(Codes.INVALID_INVENTORY_ADAPTER, 'Inventory adapter contract is incomplete', {

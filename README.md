@@ -2,11 +2,11 @@
 
 NEXM Core is a free, server-first FiveM infrastructure SDK for NEXM products. It normalizes framework/player lifecycle, money, inventory, RPC/security, notifications, localization, audit, services, integrations, components, migrations and diagnostics so NEXM products can target one stable Core contract.
 
-**Release candidate:** `1.0.0-rc.1.hotfix.4`  
-**Internal build:** `mvp_rc1_tempappearance_7f2c4a91`  
-**Release scope:** `MVP_RC_TEMP_APPEARANCE_RECOVERY`
+**Release candidate:** `1.0.0-rc.1.hotfix.11`  
+**Internal build:** `mvp_rc1_usable_items_4c3e8a71`  
+**Release scope:** `MVP_RC_USABLE_ITEM_API`
 
-This RC keeps the validated framework/inventory matrix and adds one reusable infrastructure capability: restart-safe Temporary Appearance Recovery for NEXM-controlled temporary outfits. It is not a clothing/character system and does **not** claim to be final `1.0.0`.
+This RC retains the validated compatibility matrix, Temporary Appearance Recovery, fail-closed migrations, the Core-owned JS DB bridge, and the hotfix.10 public DB restart-boundary protection. Hotfix.11 adds a backwards-compatible, resource-owner-bound server API for registering usable items without exposing framework/inventory-specific registration code to NEXM gameplay products.
 
 ## Validated compatibility matrix
 
@@ -26,6 +26,12 @@ The five profiles above are release-validated. NEXM Notify is supported and reco
 ## Temporary Appearance Recovery
 
 Core now provides resource-owner-bound persistent recovery records for temporary outfits. Server consumers use `NEXM.TemporaryAppearance.Save/Get/Has/Clear/AcknowledgeRestore`; client consumers may use `NEXM.TemporaryAppearance.Capture/Restore/Verify`. Records are keyed by Core's canonical player identity and consumer resource owner, persisted in `data/temporary_appearances.json`, and are not cleared on disconnect. A verified restore acknowledgement is required before normal cleanup. See `docs/temporary-appearance.md`.
+
+## Usable items
+
+Server gameplay resources may register use actions through `NEXM.Inventory.RegisterUsableItem(itemName, handler, options)`. Core owns the provider bridge, resource ownership, collision protection and cleanup. The handler receives `source` plus normalized item context and **registration never consumes the item automatically**. The gameplay resource decides when to call `NEXM.Inventory.RemoveItem` after its own authoritative success condition.
+
+Official validated profiles resolve through ESX, QBCore/QB inventory, Qbox + ox_inventory, or the ox_inventory stable server-export bridge without framework-specific registration code in the gameplay product. See `docs/inventory.md`.
 
 ## Install
 

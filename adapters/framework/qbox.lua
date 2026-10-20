@@ -8,11 +8,12 @@ local adapter = {
             player = { identity = { character = true, account = true, license = true }, job = true, duty = true },
             jobs = { multiple = true },
             money = { cash = true, bank = true },
-            framework = { permissions = true }
+            framework = { permissions = true, usableItems = true }
         }
     }
 }
 local initialized, generation = false, 0
+local coreUsableItems = {}
 local handlers = {}
 local function notFound(source) return nil, Errors.Create(Codes.PLAYER_NOT_FOUND, 'Player was not found in Qbox', { source = source }) end
 local function player(source)
@@ -133,6 +134,40 @@ function adapter.HasFrameworkPermission(source, permission)
     local ok, allowed = pcall(IsPlayerAceAllowed, source, permission)
     if not ok then return false, Errors.Create(Codes.ADAPTER_ERROR, 'Qbox permission check failed') end
     return allowed == true, nil
+end
+
+
+function adapter.RegisterUsableItem(itemName, dispatcher, generationToken)
+    if not initialized then
+        return false, Errors.Create(Codes.FRAMEWORK_UNAVAILABLE, 'Qbox is unavailable for usable-item registration', { framework = 'qbox' })
+    end
+    if not coreUsableItems[itemName] then
+        local inspectOk, existing = pcall(function() return exports['qbx_core']:CanUseItem(itemName) end)
+        if not inspectOk then
+            return false, Errors.Create(Codes.INTEGRATION_ERROR, 'Qbox usable-item registry inspection failed', { item = itemName, framework = 'qbox' })
+        end
+        if existing ~= nil then
+            return false, Errors.Create(Codes.ALREADY_REGISTERED, 'Qbox usable item is already owned outside NEXM Core', { item = itemName, framework = 'qbox' })
+        end
+    end
+    local ok = pcall(function()
+        return exports['qbx_core']:CreateUseableItem(itemName, function(source, item)
+            local raw = type(item) == 'table' and item or nil
+            local context = {
+                name = itemName,
+                amount = 1,
+                slot = raw and raw.slot or nil,
+                metadata = raw and (raw.metadata or raw.info) or nil,
+                provider = 'qbox'
+            }
+            return dispatcher(tonumber(source), context, generationToken)
+        end)
+    end)
+    if not ok then
+        return false, Errors.Create(Codes.INTEGRATION_ERROR, 'Qbox usable-item registration failed', { item = itemName, framework = 'qbox' })
+    end
+    coreUsableItems[itemName] = true
+    return true, nil
 end
 
 NEXM_INTERNAL.Adapters.Framework.qbox = adapter

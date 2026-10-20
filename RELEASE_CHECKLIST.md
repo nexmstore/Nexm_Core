@@ -1,27 +1,23 @@
-# 1.0.0-rc.1.hotfix.4 Release Checklist
+# 1.0.0-rc.1.hotfix.11 Release Checklist
 
-## Core package
-
-- [x] Version/build identity updated.
-- [x] Temporary appearance JSON data file included.
-- [x] Server persistence module loaded before public API.
-- [x] Client capture/restore/verify helper loaded before client public API.
-- [x] Owner is bound to calling resource; arbitrary client player identifiers are not accepted.
-- [x] Duplicate save preserves original snapshot by default.
-- [x] Clear/ack affects only the calling resource owner record.
-- [x] `playerDropped` does not clear records.
-- [x] No SQL migration or framework clothing dependency added.
-- [x] CFX open-source escrow policy retained.
-
-## Live gate
-
-- [ ] Consuming product normal save/apply/restore/ack flow.
-- [ ] Consumer resource restart recovery.
-- [ ] Full FXServer restart + reconnect recovery.
-- [ ] Disconnect/reconnect recovery.
-- [ ] Forced persistence failure blocks temporary outfit application.
-- [ ] Restore verification failure retains record.
-- [ ] Model mismatch behavior validated with configured `restoreModel`.
-- [ ] Multiple owner isolation validated in live runtime.
-
-These live gates cannot be truthfully marked complete by a Core-only package without the consuming product integration.
+- [x] Existing inventory API signatures preserved
+- [x] `RegisterUsableItem` is server-only and resource-owner bound
+- [x] item and handler validation use Core conventions
+- [x] same-owner duplicate and cross-resource collisions fail deterministically
+- [x] native framework adapters reject pre-existing non-Core usable handlers instead of silently overwriting them
+- [x] owner cleanup runs on `onResourceStop`
+- [x] stale framework callback generation cannot invoke a removed/new handler
+- [x] registration never calls `RemoveItem` or otherwise consumes inventory
+- [x] ESX adapter uses `ESX.RegisterUsableItem`
+- [x] QBCore adapter uses `QBCore.Functions.CreateUseableItem`
+- [x] Qbox adapter exposes the official `qbx_core:CreateUseableItem` path
+- [x] ox_inventory uses only the documented static server-export callback path
+- [x] ox bridge requires `consume = 0` and `server.export = 'nexm_core.UseRegisteredItem'`
+- [x] ox bridge validates invoking resource, player inventory, slot and item
+- [x] capability metadata exposes usable-item support
+- [x] unsupported profiles fail closed
+- [x] Core runtime source contains no FactoryWorks-specific item names/dependency
+- [x] hotfix.11 focused tests: 71 PASS / 0 FAIL
+- [x] existing regression assertions: 67 PASS / 0 FAIL
+- [x] Lua syntax: 78 PASS / 0 FAIL; JS syntax PASS; fxmanifest 0 missing
+- [ ] real FXServer provider matrix usable-item live gate

@@ -3,7 +3,7 @@ local Codes = NEXM_INTERNAL.Modules.Constants.ERROR_CODES
 local adapter = {
     metadata = {
         name = 'qb-inventory', resource = 'qb-inventory', version = nil, critical = true,
-        capabilities = { metadata = true, metadataFilter = false, canCarry = true, getItems = true }
+        capabilities = { metadata = true, metadataFilter = false, canCarry = true, getItems = true, usableItems = false }
     }
 }
 local initialized=false

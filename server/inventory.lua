@@ -5,6 +5,7 @@ local Guard=NEXM_INTERNAL.Modules.SessionGuard
 local Manager=NEXM_INTERNAL.Managers.Inventory
 local Codes=NEXM_INTERNAL.Modules.Constants.ERROR_CODES
 local Inventory={}
+local UsableItems=NEXM_INTERNAL.Modules.UsableItems
 local infra={ [Codes.INVENTORY_UNAVAILABLE]=true,[Codes.FRAMEWORK_UNAVAILABLE]=true,[Codes.ADAPTER_ERROR]=true,[Codes.INTEGRATION_ERROR]=true }
 local function copy(v,seen) if type(v)~='table' then return v end seen=seen or {}; if seen[v] then return nil end; seen[v]=true; local o={}; for k,x in pairs(v) do o[copy(k,seen)]=copy(x,seen) end; seen[v]=nil; return o end
 local function log(err) if err and infra[err.code] then Logger.Infrastructure(err,'inventory','nexm_core') end end
@@ -95,5 +96,8 @@ function Inventory.GetItems(source)
     local still,stale=Guard.Validate(ctx); if not still then return nil,stale end
     if result==nil then local e=mapFailure(adapterErr,'GetItems','*'); log(e); return nil,e end
     return copy(result),nil
+end
+function Inventory.RegisterUsableItem(itemName,handler,options,ownerResource)
+    return UsableItems.Register(itemName,handler,options,ownerResource)
 end
 NEXM_INTERNAL.Modules.Inventory=Inventory

@@ -1,6 +1,6 @@
 local Errors=NEXM_INTERNAL.Modules.Errors
 local Codes=NEXM_INTERNAL.Modules.Constants.ERROR_CODES
-local adapter={metadata={name='qs-inventory',resource='qs-inventory',version=nil,critical=true,capabilities={metadata=true,metadataFilter=true,canCarry=true,getItems=true}}}
+local adapter={metadata={name='qs-inventory',resource='qs-inventory',version=nil,critical=true,capabilities={metadata=true,metadataFilter=true,canCarry=true,getItems=true,usableItems=false}}}
 local initialized=false
 local qs
 local function unavailable() return Errors.Create(Codes.INVENTORY_UNAVAILABLE,'qs-inventory is unavailable',{integration='qs-inventory'}) end

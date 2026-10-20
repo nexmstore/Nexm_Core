@@ -4,10 +4,11 @@ game 'gta5'
 name 'nexm_core'
 author 'NEXM'
 description 'Reusable Foundation for the NEXM Script Ecosystem'
-version '1.0.0-rc.1.hotfix.4'
-nexm_build 'mvp_rc1_tempappearance_7f2c4a91'
+version '1.0.0-rc.1.hotfix.11'
+nexm_build 'mvp_rc1_usable_items_4c3e8a71'
 
 dependency 'oxmysql'
+
 
 -- Cross-resource client loaders (for @nexm_core/import.lua) must be present in
 -- the nexm_core client packfile. Server-side @ imports can read the resource
@@ -32,11 +33,12 @@ shared_scripts {
 }
 
 server_scripts {
-    '@oxmysql/lib/MySQL.lua',
     'server/state.lua',
     'server/logger.lua',
     'server/ownership.lua',
+    'server/db_bridge.js',
     'server/database.lua',
+    'server/public_db_transport.lua',
     'server/migrations.lua',
     'server/migrations/core.lua',
     'server/registry_base.lua',
@@ -65,6 +67,7 @@ server_scripts {
     'adapters/inventory/esx.lua',
     'adapters/inventory/qs_inventory.lua',
     'server/managers/inventory.lua',
+    'server/usable_items.lua',
     'server/inventory.lua',
     'custom/audit.lua',
     'server/audit.lua',

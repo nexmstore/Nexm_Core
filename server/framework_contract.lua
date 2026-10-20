@@ -25,7 +25,8 @@ local capabilitySchema = {
         bank = 'boolean'
     },
     framework = {
-        permissions = 'boolean'
+        permissions = 'boolean',
+        usableItems = 'boolean'
     }
 }
 
@@ -136,6 +137,12 @@ function FrameworkContract.Validate(adapter)
         return false, Errors.Create(Codes.INVALID_FRAMEWORK_ADAPTER,
             'Framework adapter declares money support without complete money methods', {
                 adapter = adapter.metadata.name, capability = 'money'
+            })
+    end
+    if caps.framework.usableItems and type(adapter.RegisterUsableItem) ~= 'function' then
+        return false, Errors.Create(Codes.INVALID_FRAMEWORK_ADAPTER,
+            'Framework adapter declares usable-item support without RegisterUsableItem', {
+                adapter = adapter.metadata.name, capability = 'framework.usableItems'
             })
     end
     if caps.framework.permissions and type(adapter.HasFrameworkPermission) ~= 'function' then

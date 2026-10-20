@@ -14,7 +14,7 @@
 local rawExports = exports
 local MARKER = '__nexm_transport_v2'
 local INSTALL_KEY = '__nexm_transport_import_v2'
-local BUILD_ID = 'mvp_rc1_tempappearance_7f2c4a91'
+local BUILD_ID = 'mvp_rc1_usable_items_4c3e8a71'
 local BUILD_KEY = '__nexmBuildId'
 local PROBE_KEY = '__nexmTransportProbe'
 local DIAGNOSTICS_KEY = '__NEXM_IMPORT_DIAGNOSTICS'
@@ -25,6 +25,115 @@ local TRACE_CASES = {
     callback_that_does_not_exist = 'unknown_callback',
     live_invalid_response = 'invalid_response'
 }
+
+local PUBLIC_DB_REQUEST_EVENT = 'nexm_core:internal:public_db:request:v1'
+local PUBLIC_DB_RESULT_EVENT = 'nexm_core:internal:public_db:result:v1'
+local PUBLIC_DB_TIMEOUT_MS = 30000
+local publicDbSequence = 0
+local publicDbPending = {}
+
+local function publicDbError(message, code)
+    return {
+        code = code or 'DATABASE_ERROR',
+        message = message or 'NEXM Core public DB transport failed'
+    }
+end
+
+local function deferResolvePromise(p, value)
+    if type(SetTimeout) == 'function' then
+        SetTimeout(0, function() p:resolve(value) end)
+    else
+        CreateThread(function()
+            Wait(0)
+            p:resolve(value)
+        end)
+    end
+end
+
+local function nextPublicDbRequestId()
+    publicDbSequence = publicDbSequence + 1
+    local resource = GetCurrentResourceName and GetCurrentResourceName() or 'consumer'
+    local now = GetGameTimer and GetGameTimer() or 0
+    return ('%s:%s:%s:%s'):format(resource, tostring(now), tostring(publicDbSequence), BUILD_ID)
+end
+
+if type(AddEventHandler) == 'function' then
+    AddEventHandler(PUBLIC_DB_RESULT_EVENT, function(payload)
+        if type(IsDuplicityVersion) == 'function' and not IsDuplicityVersion() then return end
+        if type(payload) ~= 'table' then return end
+        local resource = GetCurrentResourceName and GetCurrentResourceName() or nil
+        if payload.owner ~= resource then return end
+        local requestId = payload.requestId
+        local pending = type(requestId) == 'string' and publicDbPending[requestId] or nil
+        if not pending or payload.token ~= pending.token then return end
+        publicDbPending[requestId] = nil
+        deferResolvePromise(pending.promise, payload)
+    end)
+end
+
+local function invokePublicDb(operation, first, second)
+    if type(IsDuplicityVersion) ~= 'function' or not IsDuplicityVersion() then
+        return nil, publicDbError('NEXM.DB server transport is not available on the client', 'DATABASE_UNAVAILABLE')
+    end
+    if type(promise) ~= 'table' or type(promise.new) ~= 'function'
+        or type(Citizen) ~= 'table' or type(Citizen.Await) ~= 'function'
+        or type(TriggerEvent) ~= 'function' then
+        local err = publicDbError('NEXM.DB local transport runtime is unavailable', 'DATABASE_UNAVAILABLE')
+        if operation == 'transaction' then return false, err end
+        return nil, err
+    end
+
+    local requestId = nextPublicDbRequestId()
+    local token = requestId .. ':token'
+    local p = promise.new()
+    publicDbPending[requestId] = { token = token, promise = p, operation = operation }
+
+    if type(SetTimeout) == 'function' then
+        SetTimeout(PUBLIC_DB_TIMEOUT_MS, function()
+            local pending = publicDbPending[requestId]
+            if not pending or pending.token ~= token then return end
+            publicDbPending[requestId] = nil
+            pending.promise:resolve({
+                owner = GetCurrentResourceName and GetCurrentResourceName() or 'consumer',
+                requestId = requestId,
+                token = token,
+                success = false,
+                error = publicDbError(('NEXM.DB request timed out after %sms'):format(PUBLIC_DB_TIMEOUT_MS))
+            })
+        end)
+    end
+
+    local payload = {
+        requestId = requestId,
+        token = token,
+        operation = operation,
+        owner = GetCurrentResourceName and GetCurrentResourceName() or nil
+    }
+    if operation == 'transaction' then
+        payload.queries = first
+        payload.sharedParams = second
+    else
+        payload.sql = first
+        payload.params = second
+    end
+
+    TriggerEvent(PUBLIC_DB_REQUEST_EVENT, payload)
+    local response = Citizen.Await(p)
+    if type(response) ~= 'table' then
+        local err = publicDbError('NEXM.DB transport returned an invalid response')
+        if operation == 'transaction' then return false, err end
+        return nil, err
+    end
+    if response.success ~= true then
+        local err = type(response.error) == 'table' and response.error or publicDbError('NEXM.DB operation failed')
+        if operation == 'transaction' then return false, err end
+        return nil, err
+    end
+    return response.result, nil
+end
+
+local wrapValue
+local unpackEnvelope
 
 local function debugEnabled()
     return GetConvarInt and GetConvarInt('nexm_debug_transport', 0) == 1
@@ -60,13 +169,11 @@ local function callableKind(value)
     return type(value)
 end
 
-local wrapValue
-
 local function transportError()
     return nil, { code = 'INTEGRATION_ERROR', message = 'Invalid NEXM transport envelope' }
 end
 
-local function unpackEnvelope(envelope)
+unpackEnvelope = function(envelope)
     if type(envelope) ~= 'table' or envelope.__nexmTransport ~= MARKER then
         return wrapValue(envelope)
     end
@@ -416,9 +523,33 @@ local function install()
                     local selfProbePassed, selfProbeResults = runSelfProbe(probe)
                     local wrappedMethods = {}
                     local publicFacade = wrapValue(remoteFacade, nil, nil, wrappedMethods)
+                    local side = runtimeSide()
+
+                    -- Hotfix.10: public DB methods must not keep a yielding Core
+                    -- function-reference call open across a dependent resource stop.
+                    -- The live hotfix.9 trace proved an old FactoryWorks DB.Update
+                    -- completed after the old script environment had already stopped,
+                    -- which made CFX fail while returning through that dead function
+                    -- reference. Replace only the server-side public DB methods with
+                    -- a local event/promise proxy. Core executes DB work in its own
+                    -- resource and returns plain data events; if the consumer stops,
+                    -- its listener simply disappears and no dead call frame is resumed.
+                    local dbLocallyProxied = false
+                    if side == 'server' and type(publicFacade) == 'table' and type(publicFacade.DB) == 'table' then
+                        publicFacade.DB.Query = function(sql, params) return invokePublicDb('query', sql, params) end
+                        publicFacade.DB.Single = function(sql, params) return invokePublicDb('single', sql, params) end
+                        publicFacade.DB.Scalar = function(sql, params) return invokePublicDb('scalar', sql, params) end
+                        publicFacade.DB.Insert = function(sql, params) return invokePublicDb('insert', sql, params) end
+                        publicFacade.DB.Update = function(sql, params) return invokePublicDb('update', sql, params) end
+                        publicFacade.DB.Transaction = function(queries, sharedParams)
+                            return invokePublicDb('transaction', queries, sharedParams)
+                        end
+                        dbLocallyProxied = true
+                    end
+
+                    local migrationRunProxied = wrappedMethods['Migrations.Run'] == true
                     local publicCallback = type(publicFacade) == 'table'
                         and type(publicFacade.Callback) == 'table' and publicFacade.Callback.Await or nil
-                    local side = runtimeSide()
                     local callbackProxied = wrappedMethods['Callback.Await'] == true
                     local callbackState
                     if side == 'server' and not callbackProxied then
@@ -447,8 +578,8 @@ local function install()
                         publicCallbackKind = callableKind(publicCallback),
                         callbackLocallyProxied = callbackProxied,
                         callbackWrapperState = callbackState,
-                        proxiedNamespaces = { Callback = callbackProxied },
-                        proxiedMethods = { ['Callback.Await'] = callbackProxied },
+                        proxiedNamespaces = { Callback = callbackProxied, Migrations = migrationRunProxied, DB = dbLocallyProxied },
+                        proxiedMethods = { ['Callback.Await'] = callbackProxied, ['Migrations.Run'] = migrationRunProxied, ['DB.Query'] = dbLocallyProxied, ['DB.Single'] = dbLocallyProxied, ['DB.Scalar'] = dbLocallyProxied, ['DB.Insert'] = dbLocallyProxied, ['DB.Update'] = dbLocallyProxied, ['DB.Transaction'] = dbLocallyProxied },
                         probePassed = selfProbePassed == true,
                         probes = selfProbeResults,
                         runRealConsumerProbe = function()
@@ -491,8 +622,8 @@ local function install()
         publicCallbackKind = nil,
         callbackLocallyProxied = false,
         callbackWrapperState = 'PENDING',
-        proxiedNamespaces = { Callback = false },
-        proxiedMethods = { ['Callback.Await'] = false },
+        proxiedNamespaces = { Callback = false, Migrations = false, DB = false },
+        proxiedMethods = { ['Callback.Await'] = false, ['Migrations.Run'] = false, ['DB.Query'] = false, ['DB.Single'] = false, ['DB.Scalar'] = false, ['DB.Insert'] = false, ['DB.Update'] = false, ['DB.Transaction'] = false },
         probePassed = false,
         probes = nil
     }, false)

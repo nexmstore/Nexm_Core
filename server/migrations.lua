@@ -7,6 +7,8 @@ local Codes = NEXM_INTERNAL.Modules.Constants.ERROR_CODES
 
 local Migrations = {}
 local registry = {}
+local running = {}
+local cleanupPending = {}
 
 local function stableSerialize(value, seen)
     local valueType = type(value)
@@ -89,8 +91,48 @@ local function normalizeStatements(statements)
     return normalized, nil
 end
 
+local function debugEnabled()
+    if Config and Config.Database and Config.Database.migrationDebug == true then return true end
+    if Config and Config.Debug then return true end
+    if GetConvarInt then
+        local ok, value = pcall(GetConvarInt, 'nexm_debug_migrations', 0)
+        if ok and tonumber(value) == 1 then return true end
+    end
+    return false
+end
+
+local function compactSql(sql)
+    if type(sql) ~= 'string' then return '<none>' end
+    local compact = sql:gsub('%s+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+    if #compact > 768 then compact = compact:sub(1, 768) .. '...' end
+    return compact
+end
+
+local function paramCount(params)
+    if type(params) ~= 'table' then return 0 end
+    local count = 0
+    for _ in pairs(params) do count = count + 1 end
+    return count
+end
+
+local function diag(operation, resource, migration, sql, params, success)
+    if not debugEnabled() then return end
+    print(('[MIGRATION DIAG] operation=%s resource=%s migration=%s sql=%s param_count=%d success=%s'):format(
+        tostring(operation or 'unknown'),
+        tostring(resource or '<none>'),
+        tostring(migration or '<none>'),
+        compactSql(sql),
+        paramCount(params),
+        tostring(success == true)
+    ))
+end
+
+local function migrationError(message, cause, context)
+    return Errors.Wrap(Codes.MIGRATION_ERROR, message, cause, context)
+end
+
 function Migrations.Bootstrap()
-    local _, err = DB.Query([[
+    local sql = [[
         CREATE TABLE IF NOT EXISTS `nexm_migrations` (
             `resource` VARCHAR(128) NOT NULL,
             `migration` VARCHAR(128) NOT NULL,
@@ -98,10 +140,13 @@ function Migrations.Bootstrap()
             `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`resource`, `migration`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    ]], {}, 'nexm_core')
+    ]]
+
+    local _, err = DB.Query(sql, {}, 'nexm_core')
+    diag('bootstrap_tracking', 'nexm_core', nil, sql, {}, err == nil)
 
     if err then
-        return false, Errors.Wrap(Codes.MIGRATION_ERROR, 'Failed to create migration tracking table', err)
+        return false, migrationError('Failed to create migration tracking table', err)
     end
 
     return true, nil
@@ -161,15 +206,38 @@ function Migrations.Register(resourceName, definition, ownerResource)
 end
 
 local function getApplied(resource)
-    local rows, err = DB.Query(
-        'SELECT `migration`, `checksum` FROM `nexm_migrations` WHERE `resource` = ?',
-        { resource },
-        resource
-    )
+    local sql = 'SELECT `migration`, `checksum` FROM `nexm_migrations` WHERE `resource` = ?'
+    local params = { resource }
+    local rows, err = DB.Query(sql, params, resource)
+    diag('load_applied', resource, nil, sql, params, err == nil and type(rows) == 'table')
+
     if err then return nil, err end
+    if type(rows) ~= 'table' then
+        return nil, Errors.Create(
+            Codes.DATABASE_ERROR,
+            'Migration tracking query returned an invalid result',
+            { resource = resource, resultType = type(rows) }
+        )
+    end
 
     local applied = {}
-    for _, row in ipairs(rows or {}) do
+    for rowIndex, row in ipairs(rows) do
+        if type(row) ~= 'table' or type(row.migration) ~= 'string' or type(row.checksum) ~= 'string' then
+            return nil, Errors.Create(
+                Codes.DATABASE_ERROR,
+                'Migration tracking row is invalid',
+                { resource = resource, rowIndex = rowIndex }
+            )
+        end
+
+        if applied[row.migration] ~= nil then
+            return nil, Errors.Create(
+                Codes.DATABASE_ERROR,
+                'Duplicate migration tracking row detected',
+                { resource = resource, migration = row.migration }
+            )
+        end
+
         applied[row.migration] = row.checksum
     end
     return applied, nil
@@ -189,6 +257,11 @@ local function applyMigration(resource, migration)
         queries[#queries + 1] = tracking
 
         local ok, err = DB.Transaction(queries, nil, resource)
+        for _, statement in ipairs(migration.statements) do
+            diag('execute', resource, migration.id, statement.query, statement.values, ok == true)
+        end
+        diag('record_applied', resource, migration.id, tracking.query, tracking.values, ok == true)
+
         if not ok then return false, err end
     else
         Logger.Warn(
@@ -199,22 +272,31 @@ local function applyMigration(resource, migration)
 
         for _, statement in ipairs(migration.statements) do
             local _, err = DB.Query(statement.query, statement.values, resource)
+            diag('execute', resource, migration.id, statement.query, statement.values, err == nil)
             if err then return false, err end
         end
 
-        local _, err = DB.Insert(tracking.query, tracking.values, resource)
+        local insertId, err = DB.Insert(tracking.query, tracking.values, resource)
+        diag('record_applied', resource, migration.id, tracking.query, tracking.values, err == nil and insertId ~= nil)
         if err then return false, err end
+        if insertId == nil then
+            return false, Errors.Create(
+                Codes.DATABASE_ERROR,
+                'Migration bookkeeping insert returned no result',
+                { resource = resource, migration = migration.id }
+            )
+        end
     end
 
     Logger.Info('Migration applied', { resource = resource, migration = migration.id }, migration.ownerResource)
     return true, nil
 end
 
-function Migrations.Run(resource)
+local function runInternal(resource)
     local migrations = registry[resource] or {}
     local applied, appliedErr = getApplied(resource)
     if not applied then
-        return false, Errors.Wrap(Codes.MIGRATION_ERROR, 'Failed to read applied migrations', appliedErr, { resource = resource })
+        return false, migrationError('Failed to read applied migrations', appliedErr, { resource = resource })
     end
 
     local ids = {}
@@ -243,14 +325,76 @@ function Migrations.Run(resource)
         if not existingChecksum then
             local ok, err = applyMigration(resource, migration)
             if not ok then
-                return false, Errors.Wrap(
-                    Codes.MIGRATION_ERROR,
+                return false, migrationError(
                     'Migration failed',
                     err,
                     { resource = resource, migration = id }
                 )
             end
+            -- Keep the in-memory view authoritative for the remainder of this
+            -- run. This also prevents a later duplicate id in the same run from
+            -- being treated as unapplied if the registry is modified internally.
+            applied[id] = migration.checksum
+        elseif debugEnabled() then
+            Logger.Debug('Migration already applied; checksum matched', {
+                resource = resource,
+                migration = id
+            }, migration.ownerResource)
         end
+    end
+
+    return true, nil
+end
+
+local function finishRun(resource)
+    running[resource] = nil
+
+    if cleanupPending[resource] then
+        registry[resource] = nil
+        cleanupPending[resource] = nil
+    end
+end
+
+function Migrations.Run(resource)
+    local validResource, resourceErr = Validation.String(resource, {
+        name = 'migration resource',
+        nonEmpty = true,
+        min = 1,
+        max = 128,
+        pattern = '^[%w%._%-]+$'
+    })
+    if not validResource then return false, resourceErr end
+
+    if running[resource] then
+        local err = Errors.Create(
+            Codes.MIGRATION_ERROR,
+            'Migration run is already in progress',
+            { resource = resource }
+        )
+        Logger.Infrastructure(err, 'migrations', resource)
+        return false, err
+    end
+
+    running[resource] = true
+
+    -- IMPORTANT: do not wrap runInternal() in pcall/xpcall. runInternal() enters
+    -- the asynchronous DB path and ultimately yields in Citizen.Await. Keeping
+    -- that yielding coroutine underneath a protected-call frame can trigger Cfx
+    -- function-reference boundary errors when an oxmysql callback resumes it.
+    -- Expected DB/migration failures already use explicit structured returns.
+    local result, runErr = runInternal(resource)
+
+    finishRun(resource)
+
+    if result ~= true then
+        if not Errors.Is(runErr) then
+            runErr = Errors.Create(
+                Codes.MIGRATION_ERROR,
+                'Migration runner failed without a structured error',
+                { resource = resource }
+            )
+        end
+        return false, runErr
     end
 
     return true, nil
@@ -262,7 +406,15 @@ end
 
 function Migrations.CleanupOwner(ownerResource)
     if ownerResource == 'nexm_core' then return end
+    if running[ownerResource] then
+        cleanupPending[ownerResource] = true
+        Logger.Warn('Resource stopped while migration run was active; registry cleanup deferred', {
+            resource = ownerResource
+        }, ownerResource)
+        return
+    end
     registry[ownerResource] = nil
+    cleanupPending[ownerResource] = nil
 end
 
 function Migrations.GetRegistered(resource)

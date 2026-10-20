@@ -239,7 +239,11 @@ local function buildFacade(owner)
         AddItem = sourcePredicate(Inventory.AddItem),
         RemoveItem = sourcePredicate(Inventory.RemoveItem),
         CanCarry = sourcePredicate(Inventory.CanCarry),
-        GetItems = sourceGetter(Inventory.GetItems)
+        GetItems = sourceGetter(Inventory.GetItems),
+        RegisterUsableItem = function(itemName, handler, options)
+            local ready, readyErr = requireReady(); if not ready then return false, readyErr end
+            return Inventory.RegisterUsableItem(itemName, handler, options, owner)
+        end
     }
 
     -- Supporting platform services are intentionally non-transactional helpers.

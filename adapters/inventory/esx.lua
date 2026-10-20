@@ -1,6 +1,6 @@
 local Errors=NEXM_INTERNAL.Modules.Errors
 local Codes=NEXM_INTERNAL.Modules.Constants.ERROR_CODES
-local adapter={metadata={name='esx',resource='es_extended',version=nil,critical=true,capabilities={metadata=false,metadataFilter=false,canCarry=true,getItems=true}}}
+local adapter={metadata={name='esx',resource='es_extended',version=nil,critical=true,capabilities={metadata=false,metadataFilter=false,canCarry=true,getItems=true,usableItems=false}}}
 local initialized=false
 local ESX
 local function unsupported(feature) return Errors.Create(Codes.UNSUPPORTED_FEATURE,'ESX native inventory does not support this NEXM capability',{feature=feature,integration='esx'}) end

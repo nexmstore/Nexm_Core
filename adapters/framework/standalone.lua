@@ -7,7 +7,7 @@ local adapter = {
             player = { identity = { character = false, account = false, license = true }, job = false, duty = false },
             jobs = { multiple = false },
             money = { cash = false, bank = false },
-            framework = { permissions = false }
+            framework = { permissions = false, usableItems = false }
         }
     }
 }

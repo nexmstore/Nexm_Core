@@ -1,30 +1,17 @@
-# NEXM Core 1.0.0-rc.1.hotfix.4 Live Validation
+# NEXM Core 1.0.0-rc.1.hotfix.11 Live Validation
 
-## Temporary Appearance Recovery live gate
+Status: **PENDING REAL FXSERVER USABLE-ITEM GATE**
 
-The Core implementation is packaged in hotfix.4. Product-level save/apply/restore/ack, consumer-resource restart, full FXServer restart/reconnect, failed restore retention and multiple-owner isolation remain live-runtime gates and are not claimed as passed by this Core-only artifact.
+Automated/offline coverage verifies the Core registry/adapter contracts, but real provider callback dispatch must still be exercised in FiveM.
 
+Required live checks:
 
-Real-runtime validation is recorded separately from adapter availability. This document only claims the profiles explicitly confirmed as tested.
+1. Full FXServer restart with hotfix.11.
+2. Register one disposable usable item from a test consumer through `NEXM.Inventory.RegisterUsableItem`.
+3. Verify source/context and confirm item count does not change merely from use.
+4. Stop the consumer and verify the old callback cannot invoke its handler.
+5. Restart/re-register the consumer and verify the new handler works.
+6. Repeat on the validated profiles: A_ESX_OX, B_QB_QBINV, C_QB_OX, D_QBOX_OX, E_ESX_NATIVE.
+7. On ox_inventory profiles, item definition must use `consume = 0` and `server.export = 'nexm_core.UseRegisteredItem'`.
 
-## Verified real-runtime profiles
-
-| Profile | Stack | Status |
-|---|---|---|
-| A_ESX_OX | ESX + ox_inventory + ox_lib | **VERIFIED / LIVE TESTED** |
-| B_QB_QBINV | QBCore + qb-inventory + QBCore notify | **VERIFIED / LIVE TESTED** |
-| C_QB_OX | QBCore + ox_inventory + ox_lib | **VERIFIED / LIVE TESTED** |
-| D_QBOX_OX | Qbox + ox_inventory + Qbox / ox_lib | **VERIFIED / LIVE TESTED** |
-| E_ESX_NATIVE | ESX + ESX native inventory + ESX notify | **VERIFIED / LIVE TESTED** |
-
-A_ESX_OX also has previously recorded detailed baseline evidence: FULL **159 PASS / 0 FAIL** followed by a real full FXServer restart and QUICK **120 PASS / 0 FAIL** on the functionally equivalent validated line. No equivalent numeric harness totals are asserted here for B/C/D/E because those totals were not supplied with the compatibility confirmation.
-
-## Native NEXM Notify
-
-`nexm_notify` v1.0.3 remains the recommended optional renderer and is integrated behind `NEXM.Notify.Send`. Its adapter/hot-restart contract is implemented. Separate live-certification evidence for the N_NATIVE_NOTIFY profile is not asserted by this matrix unless recorded independently.
-
-## Operational contract
-
-- `nexm_core` is not intended to be hot-restarted in production.
-- Foundational framework/inventory changes should be applied with a full FXServer restart.
-- After the Core build containing the adapter is installed, `nexm_notify` may be restarted independently.
+Do not mark these live gates PASS until actual FXServer evidence is captured.

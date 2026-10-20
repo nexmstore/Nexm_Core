@@ -1,0 +1,42 @@
+from pathlib import Path
+import re, sys
+root=Path(__file__).resolve().parents[1]
+checks=[]
+def c(name, ok): checks.append((name,bool(ok)))
+fx=(root/'fxmanifest.lua').read_text()
+const=(root/'shared/constants.lua').read_text()
+imp=(root/'import.lua').read_text()
+db=(root/'server/database.lua').read_text()
+js=(root/'server/db_bridge.js').read_text()
+mig=(root/'server/migrations.lua').read_text()
+
+version_match = re.search(r"^version '([^']+)'", fx, re.M)
+const_version = re.search(r"VERSION = '([^']+)'", const)
+build_match = re.search(r"nexm_build '([^']+)'", fx)
+const_build = re.search(r"BUILD_ID = '([^']+)'", const)
+c('current version identity consistent', bool(version_match and const_version and version_match.group(1) == const_version.group(1)))
+c('current build id consistent', bool(build_match and const_build and build_match.group(1) == const_build.group(1) and build_match.group(1) in imp))
+c('JS DB bridge loaded', "'server/db_bridge.js'" in fx)
+c('Lua oxmysql helper removed', "@oxmysql/lib/MySQL.lua" not in fx)
+c('callback-error metadata removed', 'return_callback_errors' not in fx)
+c('no runtime MySQL calls in DB wrapper', 'MySQL.' not in db)
+c('DB request event v2 present', 'nexm_core:internal:db:request:v2' in db and 'nexm_core:internal:db:request:v2' in js)
+c('DB result event v2 present', 'nexm_core:internal:db:result:v2' in db and 'nexm_core:internal:db:result:v2' in js)
+c('JS uses oxmysql async exports', "`${operation}_async`" in js)
+c('JS bridge catches rejection', '.catch((error)' in js and 'ok: false' in js)
+c('Lua bridge timeout exists', 'DB_BRIDGE_TIMEOUT_MS' in db and 'DB bridge timeout' in db)
+c('Lua bridge returns structured DB error', "return nil, dbError(operation" in db)
+c('migration special local-event proxy removed', 'runMigrationsViaLocalEventProxy' not in imp and 'migrations:run:v1' not in imp)
+c('migration transport module removed from manifest', 'migration_transport.lua' not in fx)
+c('generic wrapper covers Migrations.Run', "wrappedMethods['Migrations.Run'] == true" in imp)
+c('Migrations.Run has duplicate guard', 'if running[resource] then' in mig)
+c('Migrations.Run retains cleanupPending', 'cleanupPending[resource]' in mig)
+c('checksum mismatch retained', 'MIGRATION_CHECKSUM_MISMATCH' in mig)
+c('no broad protected call around runInternal', not re.search(r'(pcall|xpcall)\s*\([^\n]*runInternal', mig))
+c('load_applied validates table', "type(rows) ~= 'table'" in mig)
+c('tracking duplicate rows fail', 'Duplicate migration tracking row detected' in mig)
+
+fail=[n for n,o in checks if not o]
+for n,o in checks: print(('[PASS] ' if o else '[FAIL] ')+n)
+print(f'RESULT tests={len(checks)} pass={len(checks)-len(fail)} fail={len(fail)}')
+if fail: sys.exit(1)

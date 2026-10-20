@@ -1,4 +1,50 @@
+# 1.0.0-rc.1.hotfix.11
+
+- Added resource-owner-bound server API `NEXM.Inventory.RegisterUsableItem(itemName, handler, options?)`.
+- Added canonical usable-item registry, duplicate/cross-resource collision protection, owner cleanup and stale framework callback generation guards.
+- Added normalized item context and explicit non-consumption semantics.
+- Added ESX, QBCore and Qbox framework registration adapters plus the documented ox_inventory stable server-export bridge.
+- Added `usableItems` capability declarations and fail-closed `UNSUPPORTED_FEATURE` behavior for unsupported integration paths.
+- Preserved all existing inventory APIs and hotfix.10 DB/restart behavior.
+
+# 1.0.0-rc.1.hotfix.10
+
+- Fixed the remaining dependent-resource restart function-reference error by proxying public server `NEXM.DB.*` calls through local request/result events.
+- On resource stop, Core cancels pending public DB transport ownership and never attempts to return a completed async DB result into the destroyed caller environment.
+- Preserved the public DB API, internal JS DB bridge, migration runner, migration SQL/checksums, and FactoryWorks unchanged.
+- Added restart-boundary regression coverage for orphaning an old in-flight DB result while allowing a new resource instance to continue normally.
+
+# 1.0.0-rc.1.hotfix.9
+
+- Replaced the Core Lua→oxmysql callback path with a Core-owned JavaScript DB bridge using oxmysql `*_async` exports.
+- Removed the temporary hotfix.7/8 migration-specific request/result proxy; `Migrations.Run()` again uses the generic Core facade transport.
+- Preserved structured fail-closed DB errors, migration checksums, duplicate-run protection and `cleanupPending`.
+- No FactoryWorks migration SQL/checksum/schema changes.
+
+# 1.0.0-rc.1.hotfix.8
+
+- Deferred Core DB promise resolution to the next server tick instead of resuming `Citizen.Await` continuations synchronously from inside the oxmysql/CFX callback.
+- Deferred the consumer-side migration-result promise resume for the same boundary-safety reason.
+- Preserved the hotfix.7 server-local migration proxy, checksum validation, duplicate-run guard, cleanupPending, and fail-closed DB behavior.
+- No FactoryWorks migration SQL/checksum or schema changes.
+
+# 1.0.0-rc.1.hotfix.6
+
+- Removed broad `xpcall` from the yielding migration runner.
+- Removed `pcall(Citizen.Await, ...)` from the oxmysql callback wrapper.
+- Preserved fail-closed migration errors, checksum protection, duplicate-run guard and deferred cleanup.
+- No product migration definitions/checksums changed.
+
 # Changelog
+
+## 1.0.0-rc.1.hotfix.6 — DB sparse-parameter + migration fail-closed hardening
+
+- Core DB wrapper now normalizes sparse positional Lua parameter tables before crossing into oxmysql. Interior `nil` slots are emitted as SQL `NULL` while remaining parameters are compacted into a dense array.
+- Malformed sparse parameter shapes fail closed with `DATABASE_INVALID_PARAMS` instead of reaching `rawQuery`.
+- Transaction query descriptors receive the same normalization.
+- Migration runner now validates tracking query result shape, guards concurrent duplicate runs, preserves checksum validation, and converts unexpected runner failures into structured `MIGRATION_ERROR`.
+- Optional migration diagnostics are available through `set nexm_debug_migrations 1` (or `Config.Debug=true`) and do not print parameter values.
+- No existing migration definition or checksum algorithm was changed.
 
 ## 1.0.0-rc.1.hotfix.4 — temporary appearance recovery
 

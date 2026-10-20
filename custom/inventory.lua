@@ -5,7 +5,7 @@ NEXM_CUSTOM_INVENTORY_ADAPTER = NEXM_CUSTOM_INVENTORY_ADAPTER or {
     enabled = false,
     metadata = {
         name = 'custom', resource = 'custom', version = '1.0.0', critical = true,
-        capabilities = { metadata = false, metadataFilter = false, canCarry = false, getItems = false }
+        capabilities = { metadata = false, metadataFilter = false, canCarry = false, getItems = false, usableItems = false }
     },
     IsAvailable = function() return NEXM_CUSTOM_INVENTORY_ADAPTER.enabled == true end,
     Initialize = function() if not NEXM_CUSTOM_INVENTORY_ADAPTER.enabled then return false end return true, nil end,

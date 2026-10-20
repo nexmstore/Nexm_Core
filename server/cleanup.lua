@@ -11,6 +11,7 @@ local Callbacks = NEXM_INTERNAL.Modules.Callbacks
 local RateLimit = NEXM_INTERNAL.Modules.RateLimit
 local Locale = NEXM_INTERNAL.Modules.Locale
 local API = NEXM_INTERNAL.Modules.API
+local UsableItems = NEXM_INTERNAL.Modules.UsableItems
 local State = NEXM_INTERNAL.Modules.State
 local Logger = NEXM_INTERNAL.Modules.Logger
 local States = NEXM_INTERNAL.Modules.Constants.STATES
@@ -32,6 +33,7 @@ AddEventHandler('onResourceStop', function(resourceName)
     if Callbacks and Callbacks.CleanupOwner then removed = removed + Callbacks.CleanupOwner(resourceName) end
     if RateLimit and RateLimit.CleanupOwner then removed = removed + RateLimit.CleanupOwner(resourceName) end
     if Locale and Locale.CleanupOwner then removed = removed + Locale.CleanupOwner(resourceName) end
+    if UsableItems and UsableItems.CleanupOwner then removed = removed + UsableItems.CleanupOwner(resourceName) end
     Migrations.CleanupOwner(resourceName)
     API.ClearFacade(resourceName)
     if removed > 0 then

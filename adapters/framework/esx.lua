@@ -14,7 +14,7 @@ local adapter = {
             },
             jobs = { multiple = false },
             money = { cash = true, bank = true },
-            framework = { permissions = true }
+            framework = { permissions = true, usableItems = true }
         }
     }
 }
@@ -23,6 +23,7 @@ local ESX = nil
 local initialized = false
 local generation = 0
 local handlers = {}
+local coreUsableItems = {}
 
 local function unsupported(feature)
     return nil, Errors.Create(Codes.UNSUPPORTED_FEATURE, 'Framework capability is not supported', { feature = feature, framework = 'esx' })
@@ -183,6 +184,42 @@ function adapter.HasFrameworkPermission(source, permission)
     local ok, group = pcall(xPlayer.getGroup)
     if not ok then return false, Errors.Create(Codes.ADAPTER_ERROR, 'ESX group permission check failed') end
     return tostring(group) == permission, nil
+end
+
+
+function adapter.RegisterUsableItem(itemName, dispatcher, generationToken)
+    if not initialized or not ESX then
+        return false, Errors.Create(Codes.FRAMEWORK_UNAVAILABLE, 'ESX is unavailable for usable-item registration', { framework = 'esx' })
+    end
+    if type(ESX.RegisterUsableItem) ~= 'function' then
+        return false, Errors.Create(Codes.UNSUPPORTED_FEATURE, 'ESX usable-item registration API is unavailable', { feature = 'framework.usableItems', framework = 'esx' })
+    end
+    if type(ESX.GetUsableItems) == 'function' and not coreUsableItems[itemName] then
+        local inspectOk, usable = pcall(ESX.GetUsableItems)
+        if not inspectOk then
+            return false, Errors.Create(Codes.INTEGRATION_ERROR, 'ESX usable-item registry inspection failed', { item = itemName, framework = 'esx' })
+        end
+        if type(usable) == 'table' and usable[itemName] then
+            return false, Errors.Create(Codes.ALREADY_REGISTERED, 'ESX usable item is already owned outside NEXM Core', { item = itemName, framework = 'esx' })
+        end
+    end
+    local ok = pcall(ESX.RegisterUsableItem, itemName, function(source, frameworkItem, ...)
+        local raw = select(1, ...)
+        if type(raw) ~= 'table' and type(frameworkItem) == 'table' then raw = frameworkItem end
+        local context = {
+            name = itemName,
+            amount = 1,
+            slot = type(raw) == 'table' and raw.slot or nil,
+            metadata = type(raw) == 'table' and (raw.metadata or raw.info) or nil,
+            provider = 'esx'
+        }
+        return dispatcher(tonumber(source), context, generationToken)
+    end)
+    if not ok then
+        return false, Errors.Create(Codes.INTEGRATION_ERROR, 'ESX usable-item registration failed', { item = itemName, framework = 'esx' })
+    end
+    coreUsableItems[itemName] = true
+    return true, nil
 end
 
 NEXM_INTERNAL.Adapters.Framework.esx = adapter

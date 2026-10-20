@@ -44,7 +44,8 @@ Config.LocaleFallback = 'en'
 Config.Debug = false
 
 Config.Database = {
-    healthQuery = 'SELECT 1'
+    healthQuery = 'SELECT 1',
+    migrationDebug = false
 }
 
 Config.Logging = {

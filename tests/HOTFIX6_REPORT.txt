@@ -1,0 +1,12 @@
+NEXM Core 1.0.0-rc.1.hotfix.6 regression report
+Build: mvp_rc1_migration_boundary_b612f3a0
+
+Migration async/yield harness: 14 PASS / 0 FAIL
+DB callback/Await harness: 2 PASS / 0 FAIL
+Static protected-call + migration contract audit: 16 PASS / 0 FAIL
+Focused regression total: 32 PASS / 0 FAIL
+Lua syntax: 75 PASS / 0 FAIL
+fxmanifest local Lua paths: 72 present / 0 missing
+
+Live FXServer gate: PENDING
+Required: two consecutive `restart nexm_factoryworks` cycles with schema=16 and no rawQuery/function-reference SCRIPT ERROR.

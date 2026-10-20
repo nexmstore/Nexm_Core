@@ -8,11 +8,12 @@ local adapter = {
             player = { identity = { character = true, account = true, license = true }, job = true, duty = true },
             jobs = { multiple = false },
             money = { cash = true, bank = true },
-            framework = { permissions = true }
+            framework = { permissions = true, usableItems = true }
         }
     }
 }
 local QBCore, initialized, generation = nil, false, 0
+local coreUsableItems = {}
 local handlers = {}
 local function notFound(source) return nil, Errors.Create(Codes.PLAYER_NOT_FOUND, 'Player was not found in QBCore', { source = source }) end
 local function player(source) return QBCore and QBCore.Functions and QBCore.Functions.GetPlayer(tonumber(source)) or nil end
@@ -138,6 +139,44 @@ function adapter.HasFrameworkPermission(source, permission)
     local ok, allowed = pcall(QBCore.Functions.HasPermission, source, permission)
     if not ok then return false, Errors.Create(Codes.ADAPTER_ERROR, 'QBCore permission check failed') end
     return allowed == true, nil
+end
+
+
+function adapter.RegisterUsableItem(itemName, dispatcher, generationToken)
+    if not initialized or not QBCore or not QBCore.Functions then
+        return false, Errors.Create(Codes.FRAMEWORK_UNAVAILABLE, 'QBCore is unavailable for usable-item registration', { framework = 'qbcore' })
+    end
+    if type(QBCore.Functions.CreateUseableItem) ~= 'function' then
+        return false, Errors.Create(Codes.UNSUPPORTED_FEATURE, 'QBCore usable-item registration API is unavailable', { feature = 'framework.usableItems', framework = 'qbcore' })
+    end
+    if type(QBCore.Functions.CanUseItem) == 'function' and not coreUsableItems[itemName] then
+        local inspectOk, existing = pcall(QBCore.Functions.CanUseItem, itemName)
+        if not inspectOk then
+            return false, Errors.Create(Codes.INTEGRATION_ERROR, 'QBCore usable-item registry inspection failed', { item = itemName, framework = 'qbcore' })
+        end
+        if existing ~= nil then
+            local existingOwner = type(existing) == 'table' and existing.resource or nil
+            if existingOwner ~= 'nexm_core' then
+                return false, Errors.Create(Codes.ALREADY_REGISTERED, 'QBCore usable item is already owned outside NEXM Core', { item = itemName, framework = 'qbcore', existingOwnerResource = existingOwner })
+            end
+        end
+    end
+    local ok = pcall(QBCore.Functions.CreateUseableItem, itemName, function(source, item)
+        local raw = type(item) == 'table' and item or nil
+        local context = {
+            name = itemName,
+            amount = 1,
+            slot = raw and raw.slot or nil,
+            metadata = raw and (raw.info or raw.metadata) or nil,
+            provider = 'qbcore'
+        }
+        return dispatcher(tonumber(source), context, generationToken)
+    end)
+    if not ok then
+        return false, Errors.Create(Codes.INTEGRATION_ERROR, 'QBCore usable-item registration failed', { item = itemName, framework = 'qbcore' })
+    end
+    coreUsableItems[itemName] = true
+    return true, nil
 end
 
 NEXM_INTERNAL.Adapters.Framework.qbcore = adapter

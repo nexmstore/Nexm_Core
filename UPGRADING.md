@@ -21,7 +21,19 @@ Perform one full FXServer restart when replacing the Core so all consumers reloa
 
 This is a release-metadata/certification update over hotfix.2. Runtime behavior is unchanged. Replace the resource and perform a full FXServer restart so consumers reload `@nexm_core/import.lua` with build `mvp_rc1_matrix_13401539`.
 
+## Upgrade to 1.0.0-rc.1.hotfix.6
 
-## Upgrade to 1.0.0-rc.1.hotfix.4
+Replace the Core resource and perform a **full FXServer restart** so all consumers reload `@nexm_core/import.lua` with build `mvp_rc1_migration_boundary_b612f3a0`. This build changes the shared migration/DB coroutine boundary; restarting only `nexm_factoryworks` is not sufficient to load the new Core.
 
-Replace the Core resource and perform a full FXServer restart so all consumers reload `@nexm_core/import.lua` with build `mvp_rc1_tempappearance_7f2c4a91`. Preserve the `data/temporary_appearances.json` file on later upgrades because it may contain pending recovery records. Do not hot-restart Core in production.
+Preserve `data/temporary_appearances.json` if it contains pending recovery records. Do not edit/delete `nexm_migrations`, recalculate historical checksums, or change FactoryWorks migrations for this hotfix.
+
+## Upgrade to 1.0.0-rc.1.hotfix.10
+
+Hotfix.10 adds a server-local public DB transport proxy so dependent resource restarts cannot leave a yielding Core function-reference return targeting a destroyed caller environment. Public `NEXM.DB.*` and `NEXM.Migrations.*` signatures remain unchanged. Replace the full `nexm_core` resource and perform a **FULL FXServer restart** so every consumer reloads `@nexm_core/import.lua` build `mvp_rc1_public_db_proxy_a41f5e90`. Preserve `data/temporary_appearances.json` and do not modify historical migrations/checksums.
+
+
+## Upgrade to 1.0.0-rc.1.hotfix.11
+
+Replace the full `nexm_core` resource and perform a **FULL FXServer restart** so every consumer reloads `@nexm_core/import.lua` build `mvp_rc1_usable_items_4c3e8a71`. Existing public APIs remain compatible.
+
+Products that adopt `NEXM.Inventory.RegisterUsableItem` must remove their direct framework usable-item registration code. For ox_inventory, define each usable item with `consume = 0` and `server.export = 'nexm_core.UseRegisteredItem'`. Do not add a direct ox_inventory bridge inside the gameplay product. Preserve `data/temporary_appearances.json` and historical migration records/checksums.

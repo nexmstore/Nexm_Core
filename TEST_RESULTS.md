@@ -1,56 +1,42 @@
-# NEXM Core 1.0.0-rc.1.hotfix.4 — Static Validation / Live Integration Pending
+# NEXM Core 1.0.0-rc.1.hotfix.11 Test Results
 
-Build: `mvp_rc1_tempappearance_7f2c4a91`
+Build: `mvp_rc1_usable_items_4c3e8a71`
 
-The previously validated framework/inventory matrix remains the runtime baseline. This Core-only artifact adds Temporary Appearance Recovery. Static package checks are recorded for the new build; live product-flow tests (PestControl normal shift/resource restart/full server restart/disconnect/restore failure) require the consuming product integration and are intentionally not claimed as PASS here.
+## Hotfix.11 usable-item coverage
 
-## hotfix.4 Core-only validation
+- Core registry/ownership/dispatch spec: **16 PASS / 0 FAIL**
+- ESX/QBCore/Qbox/ox_inventory adapter mocks: **18 PASS / 0 FAIL**
+- Static architecture/security/provider audit: **37 PASS / 0 FAIL**
+- Focused hotfix.11 total: **71 PASS / 0 FAIL**
 
-- Lua syntax load: **73 / 73 PASS, 0 FAIL** (Lua 5.4 parser via installed runtime library).
-- fxmanifest local Lua path audit: **72 / 72 present**.
-- Version/build coherence (`fxmanifest.lua`, `shared/constants.lua`, `import.lua`): **PASS**.
-- Initial persistence JSON parse/schema: **PASS**.
-- CFX open-source escrow rule retained: **PASS**.
-- New temporary-appearance modules contain no direct ESX/QBCore/Qbox/illenium/qb-clothing/fivem-appearance/ox_lib dependency: **PASS**.
-- Server isolated runtime harness: duplicate save preservation, reconnect identity lookup, multiple-owner isolation, clear-one-owner-only, persistence-failure rollback: **PASS**.
-- Client isolated runtime harness: capture, same-model restore+verify, model mismatch safe failure, configured model recovery: **PASS**.
-- Real FXServer product integration tests: **PENDING** (requires consuming product flow; not falsely marked PASS).
+Verified behavior includes valid registration, normalized source/context, no automatic item consumption, same-owner duplicate rejection, cross-resource collision rejection, external native-framework usable-handler collision rejection, owner cleanup, stale generation blocking, re-registration, invalid input errors, unsupported-profile fail-closed behavior, and the ox_inventory static server-export bridge.
 
-## Historical validation evidence
+## Existing regression suites
 
-# NEXM Core 1.0.0-rc.1.hotfix.3 — Automated Regression and Live Qualification
+- hotfix.9 static DB/migration bridge regression: **21 PASS / 0 FAIL**
+- hotfix.10 public DB restart-boundary static regression: **23 PASS / 0 FAIL**
+- migration async model regression: **14 PASS / 0 FAIL**
+- JS DB bridge model regression: **4 PASS / 0 FAIL**
+- restart-boundary lifecycle model: **5 PASS / 0 FAIL**
+- Existing regression total: **67 PASS / 0 FAIL**
 
-## Offline automated regression baseline
+Combined focused + existing automated assertions: **138 PASS / 0 FAIL**.
 
-The established RC regression baseline remains:
+## Syntax / package architecture audits
 
-- Phase 2 regression suites: **76 / 76 PASS**
-- Phase 3: **179 / 179 PASS**
-- Phase 4: **176 / 176 PASS**
-- Phase 5: **144 / 144 PASS**
-- Phase 6: **142 / 142 PASS**
-- Phase 7 release hardening/RC cleanup: **209 / 209 PASS**
-- **TOTAL: 926 / 926 PASS, 0 FAIL**
-- Production/test Lua syntax scan baseline: **85 files checked, 0 failures**
+- Lua `loadfile` syntax audit: **78 PASS / 0 FAIL**
+- `server/db_bridge.js` JavaScript syntax: **PASS**
+- fxmanifest local file entries: **75 present / 0 missing**
+- usable-item load order: **PASS** (`inventory manager -> usable registry -> inventory domain -> public API`)
+- baseline files removed: **0**
+- existing six Inventory domain methods: **byte-equivalent after removing only additive usable-item wiring**
+- existing public Inventory facade: **byte-equivalent after removing only the new method**
+- FactoryWorks runtime code dependency/reference after stripping comments: **0**
 
-Validator offline regression baseline: `nexm_core_test` 0.1.8 self-tests **92 / 92 PASS, 0 FAIL**.
+## Preserved hotfix.10 / hotfix.9 invariants
 
-## Real-runtime compatibility qualification
+The existing regression suite confirms the migration runner, internal DB implementation and JS DB bridge retain the established hotfix.9 behavior and the public DB restart-boundary behavior from hotfix.10 remains intact.
 
-The following profiles are confirmed verified/live tested:
+## Manual live gate still required
 
-- A_ESX_OX — ESX + ox_inventory + ox_lib
-- B_QB_QBINV — QBCore + qb-inventory + QBCore notify
-- C_QB_OX — QBCore + ox_inventory + ox_lib
-- D_QBOX_OX — Qbox + ox_inventory + Qbox / ox_lib
-- E_ESX_NATIVE — ESX + ESX native inventory + ESX notify
-
-A_ESX_OX has previously recorded detailed harness evidence: FULL **159 PASS / 0 FAIL** and post-reboot QUICK **120 PASS / 0 FAIL**. The compatibility confirmation for the remaining profiles establishes real-runtime functional verification but does not provide numeric harness totals, so none are invented here.
-
-## 1.0.0-rc.1.hotfix.3 certification-metadata update
-
-Build: `mvp_rc1_matrix_13401539`
-
-This update changes only release/build identity and documentation/status metadata for the verified compatibility matrix. Runtime provider/adaptor logic is unchanged from hotfix.2. Package integrity and manifest/reference checks are rerun for the generated ZIP.
-
-`nexm_notify` v1.0.3 remains supported/recommended, but separate N_NATIVE_NOTIFY live-certification is not claimed in this document without explicit evidence.
+No real FXServer provider callback has been claimed as PASS for hotfix.11 yet. Live validation remains required on A_ESX_OX, B_QB_QBINV, C_QB_OX, D_QBOX_OX and E_ESX_NATIVE, including resource-stop/re-register behavior and confirming item count does not change on use alone.

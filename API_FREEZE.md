@@ -20,7 +20,7 @@ Root: `IsReady`, `GetStatus`.
 - `TemporaryAppearance`: `Save`, `Get`, `Has`, `Clear`, `AcknowledgeRestore`
 - `Jobs`: `Get`, `Has`, `HasAny`, `MinimumGrade`, `IsOnDuty`
 - `Money`: `Get`, `Add`, `Remove`, `CanAfford`
-- `Inventory`: `HasItem`, `GetItemCount`, `AddItem`, `RemoveItem`, `CanCarry`, `GetItems`
+- `Inventory`: `HasItem`, `GetItemCount`, `AddItem`, `RemoveItem`, `CanCarry`, `GetItems`, `RegisterUsableItem`
 - `Notify`: `Send`
 - `Locale`: `Register`, `Get`, `SetFallback`
 - `Audit`: `Log`
